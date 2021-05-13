@@ -1,0 +1,86 @@
+---
+title: "ESM237 HW3"
+author: "Alex Ehrens, Claudia Flores, Bobby Miyashiro"
+date: "5/12/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+# packages
+library(tidyverse)
+library(lubridate)
+```
+
+### Read in and tidy climate data
+```{r}
+# read in climate datasets
+data_45 <- read.csv("data/seattle_gfdl_rcp45.csv", skip = 10, header = TRUE)
+
+data_85 <- read.csv("data/seattle_gfdl_rcp85.csv", skip = 10, header = TRUE)
+
+# parse dates, rename columns, convert from Kelvin to celsius
+data_45 <- data_45 %>% 
+  rename("date" = "yyyy.mm.dd", "tmax" = "tasmax_GFDL.ESM2M_rcp45.K.", "tmin" = "tasmin_GFDL.ESM2M_rcp45.K.") %>% 
+  mutate(date = as.Date(date)) %>% 
+  mutate(tmax = tmax - 273.15) %>% 
+  mutate(tmin = tmin - 273.15)
+
+data_85 <- data_85 %>% 
+  rename("date" = "yyyy.mm.dd", "tmax" = "tasmax_GFDL.ESM2M_rcp85.K.", "tmin" = "tasmin_GFDL.ESM2M_rcp85.K.") %>% 
+  mutate(date = as.Date(date)) %>% 
+  mutate(tmax = tmax - 273.15) %>% 
+  mutate(tmin = tmin - 273.15)
+```
+
+### Run function containing equations from Hamlet et al
+```{r}
+source("cdd_fun.R")
+
+# input Seattle's population (as of 2019)
+pop = 724305 
+
+# run Hamlet function using climate data as tmax and tmin inputs 
+results_45 <- Hamlet(data_45, pop)
+
+results_85 <- Hamlet(data_85, pop)
+```
+
+### Make some plots
+```{r}
+### rcp4.5 plots
+# cdd
+ggplot(data = results_45) +
+  geom_line(aes(x = year, y = cdd))
+
+# hdd 
+ggplot(data = results_45)+
+  geom_line(aes(x = year, y = hdd))
+
+# CEDI
+ggplot(data = results_45)+
+  geom_line(aes(x = year, y = CEDI))
+
+# HEDI
+ggplot(data = results_45)+
+  geom_line(aes(x = year, y = HEDI))
+
+### rcp8.5 plots
+# cdd
+ggplot(data = results_85) +
+  geom_line(aes(x = year, y = cdd))
+
+# hdd 
+ggplot(data = results_85)+
+  geom_line(aes(x = year, y = hdd))
+
+# CEDI
+ggplot(data = results_85)+
+  geom_line(aes(x = year, y = CEDI))
+
+# HEDI
+ggplot(data = results_85)+
+  geom_line(aes(x = year, y = HEDI))
+```
+
