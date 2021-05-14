@@ -12,6 +12,7 @@ knitr::opts_chunk$set(echo = TRUE)
 library(tidyverse)
 library(lubridate)
 library(janitor)
+library(patchwork)
 ```
 
 ### Read in and tidy climate data
@@ -60,7 +61,7 @@ results_proj <- data_projections %>%
   mutate(HEDI = pop*heating_degree_days)
 ```
 
-### Make some plots
+### Make some exploratory plots
 ```{r}
 ### rcp4.5 plots
 # cdd
@@ -104,5 +105,72 @@ ggplot(data = results_proj)+
 # HEDI
 ggplot(data = results_proj)+
   geom_line(aes(x = year, y = HEDI))
+```
+
+### Finalized plots
+```{r}
+# CEDI with 3 models/datasets
+
+p1 <- ggplot()+
+  geom_line(data = results_45, aes(x = year, y = CEDI, color = "RCP 4.5"))+
+  geom_line(data = results_85, aes(x = year, y = CEDI, color = "RCP 8.5"))+
+  scale_color_manual(values = c("skyblue1", "royalblue"))+
+  theme_bw()+
+  theme(legend.title = element_blank(),
+        legend.position = c(0.23, 0.825))+
+  labs(x = "Year",
+       y = "Cooling Energy Demand Index (CEDI)")
+
+# HEDI with 3 models/datasets
+
+p2 <- ggplot()+
+  geom_line(data = results_45, aes(x = year, y = HEDI, color = "RCP 4.5"))+
+  geom_line(data = results_85, aes(x = year, y = HEDI, color = "RCP 8.5"))+
+  scale_color_manual(values = c("indianred1", "darkred"))+
+  theme_bw()+
+  theme(legend.title = element_blank(),
+        legend.position = c(0.23, 0.15))+
+  labs(x = "Year",
+       y = "Heating Energy Demand Index (HEDI)")
+
+plot <- p1 + p2
+plot + plot_annotation(
+  title = "Projected changes in CEDI and HEDI under different climate scenarios in Seattle, WA",
+  subtitle = "Global climate model: GFDL-ESM2M",
+  caption = "Figure 1 - Results for future Cooling Energy Demand Index (CEDI) and Heating Energy Demand Index (HEDI) for Seattle, WA. CEDI/HEDI were calculated from \nprojected daily maximum and minimum temperatures using equations from Hamlet et al., (2010).",
+  theme = theme(plot.caption = element_text(hjust = 0))
+)
+
+ggsave("seattle_results.jpg", height = 6, width = 9)
+
+## CEDI and HEDI 
+
+p3 <- ggplot(data = results_proj)+
+  geom_line(aes(x = year, y = CEDI, color = "Forecasted"))+
+  scale_color_manual(values = "blue")+
+  theme_bw()+
+  theme(legend.title = element_blank(),
+        legend.position = c(0.23, 0.825))+
+  labs(x = "Year",
+       y = "Cooling Energy Demand Index (CEDI)")
+
+p4 <- ggplot(data = results_proj)+
+  geom_line(aes(x = year, y = HEDI, color = "Forecasted"))+
+  scale_color_manual(values = "firebrick")+
+  theme_bw()+
+  theme(legend.title = element_blank(),
+        legend.position = c(0.23, 0.15))+
+  labs(x = "Year",
+       y= "Heating Energy Demand Index")
+
+plot2 <- p3 + p4
+plot2 + plot_annotation(
+  title = "Forecasted changes in CEDI and HEDI using linear regression of historic data",
+  subtitle = "For Pacific U.S. Region - WA, OR, CA, AK, & HI",
+  caption = "Figure 2 - Results for future Cooling Energy Demand Index (CEDI) and Heating Energy Demand Index (HEDI) for Pacific United States region. Observed historic \ncooling degree days and heating degree days from U.S. Energy Information Administration, (2021) were forecasted into the future using a linear regression. \nRegion includes states of Washington, Oregon, California, Alaska, and Hawaii.",
+  theme = theme(plot.caption = element_text(hjust = 0))
+)
+
+ggsave("pacific_results.jpg", height = 6, width = 9)
 ```
 
