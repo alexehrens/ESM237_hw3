@@ -11,6 +11,7 @@ knitr::opts_chunk$set(echo = TRUE)
 # packages
 library(tidyverse)
 library(lubridate)
+library(janitor)
 ```
 
 ### Read in and tidy climate data
@@ -19,6 +20,9 @@ library(lubridate)
 data_45 <- read.csv("data/seattle_gfdl_rcp45.csv", skip = 10, header = TRUE)
 
 data_85 <- read.csv("data/seattle_gfdl_rcp85.csv", skip = 10, header = TRUE)
+
+data_projections <- read.csv("data/hdd_cdd_projections.csv") %>% 
+  clean_names()
 
 # parse dates, rename columns, convert from Kelvin to celsius
 data_45 <- data_45 %>% 
@@ -45,6 +49,15 @@ pop = 724305
 results_45 <- Hamlet(data_45, pop)
 
 results_85 <- Hamlet(data_85, pop)
+
+# run Hamlet equation for HEDI and CEDI for projections
+results_proj <- data_projections %>% 
+  mutate(ac_pen = 0.944-(1.17*exp(-0.00298*cooling_degree_days))) %>% 
+    mutate(ac_pen = case_when(
+      ac_pen > 0.08 ~ ac_pen,
+      ac_pen < 0.08 ~ 0.08)) %>% 
+  mutate(CEDI = ac_pen*pop*cooling_degree_days) %>% 
+  mutate(HEDI = pop*heating_degree_days)
 ```
 
 ### Make some plots
@@ -81,6 +94,15 @@ ggplot(data = results_85)+
 
 # HEDI
 ggplot(data = results_85)+
+  geom_line(aes(x = year, y = HEDI))
+
+### projection plots
+# CEDI
+ggplot(data = results_proj)+
+  geom_line(aes(x = year, y = CEDI))
+
+# HEDI
+ggplot(data = results_proj)+
   geom_line(aes(x = year, y = HEDI))
 ```
 
